@@ -9,17 +9,6 @@ if true then return {} end
 -- * disable/enabled LazyVim plugins
 -- * override the configuration of LazyVim plugins
 return {
-  -- add gruvbox
-  { "ellisonleao/gruvbox.nvim" },
-
-  -- Configure LazyVim to load gruvbox
-  {
-    "LazyVim/LazyVim",
-    opts = {
-      colorscheme = "gruvbox",
-    },
-  },
-
   -- change trouble config
   {
     "folke/trouble.nvim",
@@ -179,7 +168,7 @@ return {
   -- use mini.starter instead of alpha
   { import = "lazyvim.plugins.extras.ui.mini-starter" },
 
-  -- add jsonls and schemastore packages, and setup treesitter for json, json5 and jsonc
+  -- add jsonls and schemastore packages, and setup treesitter for json, sonc
   { import = "lazyvim.plugins.extras.lang.json" },
 
   -- add any tools you want to have installed below
