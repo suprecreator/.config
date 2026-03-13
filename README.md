@@ -2,20 +2,24 @@
 
 个人配置文件仓库，包含 shell、编辑器、终端等各种工具的配置。
 
-## 快速开始
-
 ```bash
 git clone https://github.com/suprecreator/.config.git ~/.config
 ```
 
 ---
 
-## 常用命令参考
+## 常用命令速查
 
-<details open>
-<summary><b>🍎 macOS</b></summary>
+<!-- TAB-MENU -->
+| 🍎 [macOS](#macos) | 🐧 [Linux](#linux) | 🪟 [Windows](#windows) |
+|:------------------:|:------------------:|:----------------------:|
 
-### 系统
+---
+
+<a name="macos"></a>
+### 🍎 macOS
+
+#### 系统设置
 ```bash
 # 显示隐藏文件
 defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder
@@ -26,71 +30,68 @@ defaults write com.apple.finder CreateDesktop -bool false && killall Finder
 # 截图保存到剪贴板
 defaults write com.apple.screencapture target -string "clipboard"
 
-# 禁用系统完整性保护检查（谨慎使用）
+# 查看系统完整性保护状态
 csrutil status
 ```
 
-### Homebrew
+#### Homebrew
 ```bash
-# 安装 Homebrew
+# 安装
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # 更新
 brew update && brew upgrade
 
-# 安装常用工具
+# 常用工具
 brew install git vim tmux fzf ripgrep fd eza bat zoxide starship
 
-# 安装 GUI 应用
+# GUI 应用
 brew install --cask alacritty raycast
 ```
 
-### Shell
+#### Shell
 ```bash
-# 切换到 zsh
+# 切换默认 shell
 chsh -s /bin/zsh
 
-# 加载配置
+# 重新加载配置
 source ~/.zshrc
 source ~/.zprofile
 ```
 
-### 定时任务 (launchd)
+#### 定时任务 (launchd)
 ```bash
-# 加载任务
+# 加载/重载任务
 launchctl load ~/Library/LaunchAgents/com.user.zsh-backup.plist
 
 # 卸载任务
 launchctl unload ~/Library/LaunchAgents/com.user.zsh-backup.plist
 
-# 查看任务状态
+# 查看运行状态
 launchctl list | grep com.user
 ```
 
-### SSH
-```bash
-# 生成密钥
-ssh-keygen -t ed25519 -C "your_email@example.com"
+#### 路径速查
+| 项目 | 路径 |
+|------|------|
+| ZSH 配置 | `~/.zshrc`, `~/.zprofile` |
+| SSH 密钥 | `~/.ssh/` |
+| 启动项 | `~/Library/LaunchAgents/` |
+| 备份目录 | `~/.config/backups/zsh/` |
 
-# 添加密钥到 ssh-agent
-ssh-add ~/.ssh/id_ed25519
-```
+---
 
-</details>
+<a name="linux"></a>
+### 🐧 Linux
 
-<details>
-<summary><b>🐧 Linux</b></summary>
+*待补充...* 欢迎 PR！
 
-*待补充...*
+---
 
-</details>
+<a name="windows"></a>
+### 🪟 Windows
 
-<details>
-<summary><b>🪟 Windows</b></summary>
-
-*待补充...*
-
-</details>
+*待补充...* 欢迎 PR！
 
 ---
 
@@ -103,7 +104,8 @@ ssh-add ~/.ssh/id_ed25519
 ├── fish/           # Fish shell 配置
 ├── tmux/           # Tmux 配置
 ├── forge/          # AI agents 配置
-├── backups/zsh/    # ZSH 自动备份
+├── backups/        # 自动备份
+│   └── zsh/        # ZSH 配置备份 ⭐
 └── agents/         # Agent skills
     └── skills/
         └── pua/    # PUA 万能激励引擎
@@ -113,26 +115,43 @@ ssh-add ~/.ssh/id_ed25519
 
 ## Features
 
-### 🤖 PUA Skill
+### 💾 ZSH 自动备份
 
-位于 `agents/skills/pua/`，一个强制系统化解题方法论的技能模块。
+你的 `~/.zshrc` 和 `~/.zprofile` 会被自动备份到：
 
-**核心原则：**
-- **铁律一**：穷尽一切方案之前，禁止说"我无法解决"
-- **铁律二**：先用工具自查，再问用户
-- **铁律三**：端到端交付，主动闭环
+```
+~/.config/backups/zsh/
+├── .zshrc.latest              → 最新版本（软链接）
+├── .zshrc.20260313_190402     # 带时间戳的历史版本
+├── .zprofile.latest           → 最新版本（软链接）
+└── .zprofile.20260313_190402  # 带时间戳的历史版本
+```
 
-### 💾 自动备份
+**备份策略：**
+- ⏰ 每天上午 10:00 自动执行
+- 🔓 登录时也会备份一次
+- 📦 保留最近 30 个版本，自动清理旧的
 
-ZSH 配置文件 (`~/.zshrc`, `~/.zprofile`) 每天自动备份到 `backups/zsh/`：
-- 保留最近 30 个版本
-- 每天上午 10:00 自动执行
-- 登录时也会执行一次
-
+**手动备份：**
 ```bash
-# 手动备份
 ~/.config/backups/zsh/backup.sh
 ```
+
+**查看最新备份：**
+```bash
+cat ~/.config/backups/zsh/.zshrc.latest
+```
+
+---
+
+### 🤖 PUA Skill
+
+位于 `agents/skills/pua/` - 一个强制系统化解题方法论的技能模块。
+
+**三条铁律：**
+1. **穷尽一切** - 禁止说"我无法解决"
+2. **先做后问** - 先用工具自查
+3. **主动闭环** - 端到端交付
 
 ---
 
