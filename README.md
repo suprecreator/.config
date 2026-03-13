@@ -10,14 +10,31 @@ git clone https://github.com/suprecreator/.config.git ~/.config
 
 ## 常用命令速查
 
-<!-- TAB-MENU -->
-| 🍎 [macOS](#macos) | 🐧 [Linux](#linux) | 🪟 [Windows](#windows) |
-|:------------------:|:------------------:|:----------------------:|
+选择你的系统查看对应命令：
 
----
+<table>
+<tr>
+<td width="33%" align="center">
 
-<a name="macos"></a>
-### 🍎 macOS
+**🍎 macOS**
+
+</td>
+<td width="33%" align="center">
+
+**🐧 Linux**
+
+</td>
+<td width="33%" align="center">
+
+**🪟 Windows**
+
+</td>
+</tr>
+<tr>
+<td>
+
+<details open>
+<summary>展开 macOS 命令</summary>
 
 #### 系统设置
 ```bash
@@ -79,19 +96,31 @@ launchctl list | grep com.user
 | 启动项 | `~/Library/LaunchAgents/` |
 | 备份目录 | `~/.config/backups/zsh/` |
 
----
+</details>
 
-<a name="linux"></a>
-### 🐧 Linux
+</td>
+<td>
+
+<details>
+<summary>展开 Linux 命令</summary>
+
+*待补充...* 欢迎 PR！
+
+</details>
+
+</td>
+<td>
+
+<details>
+<summary>展开 Windows 命令</summary>
 
 *待补充...* 欢迎 PR！
 
----
+</details>
 
-<a name="windows"></a>
-### 🪟 Windows
-
-*待补充...* 欢迎 PR！
+</td>
+</tr>
+</table>
 
 ---
 
