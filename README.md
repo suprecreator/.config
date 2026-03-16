@@ -10,46 +10,84 @@ git clone https://github.com/suprecreator/.config.git ~/.config
 
 ## 常用命令速查
 
+<details open>
+<summary><b>🍎 macOS</b></summary>
+
 ### 系统设置
+```bash
+# 显示隐藏文件
+defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder
 
-| 🍎 macOS | 🐧 Linux | 🪟 Windows |
-|:---------|:---------|:-----------|
-| `defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder` | *待补充* | *待补充* |
-| `defaults write com.apple.finder CreateDesktop -bool false && killall Finder` | | |
-| `defaults write com.apple.screencapture target -string "clipboard"` | | |
+# 隐藏桌面图标
+defaults write com.apple.finder CreateDesktop -bool false && killall Finder
 
-### Homebrew / 包管理器
+# 截图保存到剪贴板
+defaults write com.apple.screencapture target -string "clipboard"
 
-| 🍎 macOS | 🐧 Linux | 🪟 Windows |
-|:---------|:---------|:-----------|
-| **安装 Homebrew**<br>`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"` | *apt/dnf/pacman* | *choco/scoop/winget* |
-| **更新**<br>`brew update && brew upgrade` | `sudo apt update && sudo apt upgrade` | `choco upgrade all` |
-| **常用工具**<br>`brew install git vim tmux fzf ripgrep fd eza bat zoxide starship` | `sudo apt install git vim tmux fzf ripgrep fd-find bat zoxide` | `choco install git vim tmux fzf ripgrep fd bat zoxide` |
-| **GUI 应用**<br>`brew install --cask alacritty raycast` | *各发行版不同* | `choco install alacritty` |
+# 查看系统完整性保护状态
+csrutil status
+```
 
-### Shell 配置
+### Homebrew
+```bash
+# 安装
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-| 🍎 macOS | 🐧 Linux | 🪟 Windows |
-|:---------|:---------|:-----------|
-| **切换默认 shell**<br>`chsh -s /bin/zsh` | `chsh -s /usr/bin/zsh` | *使用 Windows Terminal* |
-| **重新加载配置**<br>`source ~/.zshrc` | `source ~/.zshrc` | `source $PROFILE` |
-| **ZSH 配置路径**<br>`~/.zshrc`, `~/.zprofile` | `~/.zshrc` | *PowerShell 配置文件* |
+# 更新
+brew update && brew upgrade
 
-### 定时任务
+# 常用工具
+brew install git vim tmux fzf ripgrep fd eza bat zoxide starship
 
-| 🍎 macOS (launchd) | 🐧 Linux (systemd) | 🪟 Windows |
-|:-------------------|:-------------------|:-----------|
-| **加载任务**<br>`launchctl load ~/Library/LaunchAgents/com.user.zsh-backup.plist` | `systemctl --user enable zsh-backup.timer` | *任务计划程序* |
-| **卸载任务**<br>`launchctl unload ~/Library/LaunchAgents/com.user.zsh-backup.plist` | `systemctl --user disable zsh-backup.timer` | |
-| **查看状态**<br>`launchctl list \| grep com.user` | `systemctl --user list-timers` | `Get-ScheduledTask` |
+# GUI 应用
+brew install --cask alacritty raycast
+```
 
-### SSH 密钥
+### Shell
+```bash
+# 切换默认 shell
+chsh -s /bin/zsh
 
-| 🍎 macOS | 🐧 Linux | 🪟 Windows |
-|:---------|:---------|:-----------|
-| **生成密钥**<br>`ssh-keygen -t ed25519 -C "email@example.com"` | 同 macOS | 同 macOS |
-| **添加密钥**<br>`ssh-add ~/.ssh/id_ed25519` | `ssh-add ~/.ssh/id_ed25519` | `ssh-add $env:USERPROFILE\.ssh\id_ed25519` |
-| **SSH 目录**<br>`~/.ssh/` | `~/.ssh/` | `%USERPROFILE%\.ssh\` |
+# 重新加载配置
+source ~/.zshrc
+source ~/.zprofile
+```
+
+### 定时任务 (launchd)
+```bash
+# 加载/重载任务
+launchctl load ~/Library/LaunchAgents/com.user.zsh-backup.plist
+
+# 卸载任务
+launchctl unload ~/Library/LaunchAgents/com.user.zsh-backup.plist
+
+# 查看运行状态
+launchctl list | grep com.user
+```
+
+### 路径速查
+| 项目 | 路径 |
+|------|------|
+| ZSH 配置 | `~/.zshrc`, `~/.zprofile` |
+| SSH 密钥 | `~/.ssh/` |
+| 启动项 | `~/Library/LaunchAgents/` |
+| 备份目录 | `~/.config/backups/zsh/` |
+
+</details>
+
+<details>
+<summary><b>🐧 Linux</b></summary>
+
+*待补充...* 欢迎 PR！
+
+</details>
+
+<details>
+<summary><b>🪟 Windows</b></summary>
+
+*待补充...* 欢迎 PR！
+
+</details>
 
 ---
 
@@ -92,13 +130,11 @@ git clone https://github.com/suprecreator/.config.git ~/.config
 
 **手动备份：**
 ```bash
-# macOS / Linux
 ~/.config/backups/zsh/backup.sh
 ```
 
 **查看最新备份：**
 ```bash
-# macOS / Linux
 cat ~/.config/backups/zsh/.zshrc.latest
 ```
 
