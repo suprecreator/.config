@@ -7,8 +7,3 @@ bold = { family = "FiraCode Nerd Font", style = "Bold" }
 italic = { family = "FiraCode Nerd Font", style = "Italic" }
 bold_italic = { family = "FiraCode Nerd Font", style = "Bold Italic" }
 size = 18.0
-
-[[keyboard.bindings]]
-key = "Return"
-mods = "Shift"
-chars = "\u001B\r"
