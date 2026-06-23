@@ -1,0 +1,4 @@
+interface:
+  display_name: "Visual Artifact Explainer"
+  short_description: "HTML artifacts for visual problem analysis"
+  default_prompt: "Use $visual-artifact-explainer to explain this problem with an HTML artifact and visual diagrams."

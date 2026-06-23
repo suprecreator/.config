@@ -1,0 +1,4 @@
+interface:
+  display_name: "Task Dashboard"
+  short_description: "Turn task state into a sharp HTML dashboard"
+  default_prompt: "Use $task-dashboard to create a mission-control HTML dashboard for the current task."

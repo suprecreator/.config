@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="zh-CN" data-dashtml-path="__ABS_HTML_PATH__">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>__DASHBOARD_TITLE__</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #151515;
+      --panel: #242424;
+      --panel-2: #2c2c2c;
+      --text: #f2f2f2;
+      --muted: #b1b1b1;
+      --subtle: #777777;
+      --line: #3f3f3f;
+      --accent: #79b8ff;
+      --green: #44d07b;
+      --amber: #f4b544;
+      --red: #ff776d;
+      --radius: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      line-height: 1.58;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    h1, h2, h3, p { margin: 0; }
+    code, .mono {
+      font-family: var(--mono);
+      font-size: 0.92em;
+      background: #3a3a3a;
+      border-radius: 7px;
+      padding: 0.08rem 0.35rem;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 200px minmax(520px, 920px) 320px;
+      gap: 24px;
+      padding: 26px 24px 48px;
+      align-items: start;
+      justify-content: center;
+      overflow-x: clip;
+    }
+    .content { width: 100%; max-width: 920px; min-width: 0; padding-top: 4px; }
+    .topbar { margin-bottom: 18px; }
+    .eyebrow { color: var(--muted); font-size: 13px; margin-bottom: 4px; }
+    h1 { font-size: 25px; font-weight: 680; line-height: 1.2; }
+    h2 { font-size: 18px; margin-bottom: 12px; }
+    h3 { font-size: 15px; margin-bottom: 8px; }
+
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      padding: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      min-width: 0;
+    }
+    .toc-title { color: var(--subtle); font-size: 12px; margin-bottom: 8px; padding: 0 8px; }
+    .toc-list { display: grid; gap: 4px; }
+    .toc-link {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      border-radius: 8px;
+      color: var(--muted);
+      padding: 7px 8px;
+      text-decoration: none;
+      min-width: 0;
+    }
+    .toc-link:hover { background: rgba(255, 255, 255, 0.045); text-decoration: none; }
+    .toc-link.active { background: rgba(90, 167, 255, 0.14); color: #d7eaff; }
+    .toc-index { color: var(--subtle); font-family: var(--mono); font-size: 12px; }
+    .toc-link span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .doc { outline: none; }
+    .doc[contenteditable="true"]:focus { outline: none; }
+    .doc.editing { caret-color: var(--accent); }
+    .section { margin-bottom: 28px; scroll-margin-top: 24px; }
+    .section-body { display: grid; gap: 14px; }
+    .lead { font-size: 17px; color: #dedede; max-width: 860px; }
+    .cards, .flow { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); }
+    .card, .note {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      min-width: 0;
+    }
+    .note.info { border-left: 4px solid var(--accent); }
+    .note.ok { border-left: 4px solid var(--green); }
+    .note.warn { border-left: 4px solid var(--amber); }
+    .list { margin: 0; padding-left: 22px; color: #e8e8e8; }
+    .list li { margin: 8px 0; }
+    .table-scroll { max-width: 100%; overflow-x: auto; border-radius: var(--radius); }
+    table {
+      width: 100%;
+      min-width: 620px;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    th, td { padding: 11px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; background: #2d2d2d; }
+    tr:last-child td { border-bottom: 0; }
+    .pill {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 650;
+      background: #3a3a3a;
+      color: #dfdfdf;
+      white-space: nowrap;
+    }
+    .pill.green { color: #d8ffe7; background: rgba(68, 208, 123, 0.18); }
+    .pill.amber { color: #ffe8b6; background: rgba(244, 181, 68, 0.18); }
+    .pill.red { color: #ffd9d6; background: rgba(255, 119, 109, 0.16); }
+
+    .rail {
+      position: sticky;
+      top: 22px;
+      align-self: start;
+      max-height: calc(100vh - 44px);
+      overflow: auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+    }
+    .rail-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-weight: 650; margin-bottom: 10px; }
+    .rail-section { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
+    .rail-list { display: grid; gap: 8px; }
+    .rail-item { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: center; color: var(--text); font-size: 14px; }
+    .rail-item .icon { color: var(--muted); text-align: center; }
+    .rail-item .value { color: var(--subtle); font-size: 12px; text-align: right; }
+    .status-line { margin-top: 10px; color: var(--subtle); font-size: 12px; }
+    .save-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: var(--green); margin-right: 6px; }
+
+    @media (max-width: 1500px) {
+      .app { grid-template-columns: minmax(0, 1fr) 340px; }
+      .toc { grid-column: 1 / -1; position: static; max-height: none; padding: 0; }
+      .toc-list { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+      .toc-link { grid-template-columns: auto auto; white-space: nowrap; }
+    }
+    @media (max-width: 1080px) {
+      .app { grid-template-columns: 1fr; }
+      .rail { position: static; max-height: none; }
+    }
+    @media (max-width: 760px) {
+      .app { padding: 18px 14px 36px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <nav class="toc" aria-label="Section navigation">
+      <div class="toc-title">Contents</div>
+      <div class="toc-list">
+        <a class="toc-link active" href="#goal"><span class="toc-index">01</span><span>__SECTION_1_TITLE__</span></a>
+        <a class="toc-link" href="#changes"><span class="toc-index">02</span><span>__SECTION_2_TITLE__</span></a>
+        <a class="toc-link" href="#details"><span class="toc-index">03</span><span>__SECTION_3_TITLE__</span></a>
+      </div>
+    </nav>
+
+    <main class="content">
+      <header class="topbar">
+        <div class="eyebrow">__EYEBROW__</div>
+        <h1>__DASHBOARD_TITLE__</h1>
+      </header>
+
+      <article id="editableDoc" class="doc" contenteditable="false" spellcheck="false" tabindex="0">
+        <section class="section" id="goal">
+          <h2>1. __SECTION_1_TITLE__</h2>
+          <div class="section-body">
+            <p class="lead">__GOAL_SUMMARY__</p>
+            <div class="cards">
+              <div class="card"><h3>目标</h3><p>__GOAL_CARD__</p></div>
+              <div class="card"><h3>方案</h3><p>__PLAN_CARD__</p></div>
+              <div class="card"><h3>边界</h3><p>__SCOPE_CARD__</p></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="changes">
+          <h2>2. __SECTION_2_TITLE__</h2>
+          <div class="section-body">
+            <div class="note info"><h3>__CHANGE_TITLE__</h3><p>__CHANGE_TEXT__</p></div>
+            <div class="note warn"><h3>__TRADEOFF_TITLE__</h3><p>__TRADEOFF_TEXT__</p></div>
+          </div>
+        </section>
+
+        <section class="section" id="details">
+          <h2>3. __SECTION_3_TITLE__</h2>
+          <div class="section-body">
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Item</th><th>Status</th><th>Note</th></tr></thead>
+                <tbody>
+                  <tr><td>__ITEM__</td><td><span class="pill amber">__STATUS__</span></td><td>__NOTE__</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="note ok"><h3>Next</h3><ul class="list"><li>__NEXT_STEP__</li></ul></div>
+          </div>
+        </section>
+      </article>
+    </main>
+
+    <aside class="rail">
+      <div class="rail-title"><span>Key Info</span><span class="pill amber">__STATUS_LABEL__</span></div>
+      <div class="rail-list">
+        <a class="rail-item" href="__PRIMARY_LINK__"><span class="icon">↗</span><span>__PRIMARY_LINK_LABEL__</span><span class="value">link</span></a>
+      </div>
+      <div class="rail-section">
+        <div class="rail-title"><span>Page Editing</span></div>
+        <div class="rail-list">
+          <div class="rail-item"><span class="icon">✓</span><span>Editable body</span><span class="value">double-click</span></div>
+          <div class="rail-item"><span class="icon">✓</span><span>Autosave</span><span class="value">file + browser</span></div>
+          <div class="rail-item"><span class="icon">●</span><span>Save server</span><span class="value">127.0.0.1:8765</span></div>
+        </div>
+        <p id="saveStatus" class="status-line"><span class="save-dot"></span>Double-click content to edit.</p>
+      </div>
+      <div class="rail-section">
+        <div class="rail-title"><span>Freshness</span></div>
+        <p class="status-line">__FRESHNESS_NOTE__</p>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    (function () {
+      const doc = document.getElementById("editableDoc");
+      const status = document.getElementById("saveStatus");
+      const sourcePath = document.documentElement.dataset.dashtmlPath || decodeURIComponent(location.pathname);
+      const key = "dashtml:" + sourcePath + ":editableDoc:v1";
+      const saveEndpoint = "http://127.0.0.1:8765/save";
+      let timer = null;
+      let dirty = false;
+      let saveController = null;
+
+      function setStatus(text) {
+        status.innerHTML = '<span class="save-dot"></span>' + text;
+      }
+
+      function serializeDocument() {
+        const clone = document.documentElement.cloneNode(true);
+        const cloneDoc = clone.querySelector("#editableDoc");
+        if (cloneDoc) {
+          cloneDoc.setAttribute("contenteditable", "false");
+          cloneDoc.classList.remove("editing");
+        }
+        return "<!doctype html>\n" + clone.outerHTML;
+      }
+
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        doc.innerHTML = saved;
+        setStatus("Draft restored from browser autosave.");
+      }
+
+      async function saveFile() {
+        if (saveController) saveController.abort();
+        saveController = new AbortController();
+        const html = serializeDocument();
+        const response = await fetch(saveEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path: sourcePath, html }),
+          signal: saveController.signal,
+        });
+        if (!response.ok) throw new Error(await response.text());
+      }
+
+      function saveDraft() {
+        localStorage.setItem(key, doc.innerHTML);
+        saveFile()
+          .then(function () {
+            dirty = false;
+            setStatus("Saved to file " + new Date().toLocaleTimeString() + ".");
+          })
+          .catch(function (error) {
+            if (error.name === "AbortError") return;
+            setStatus("Browser draft saved; file server unavailable.");
+          });
+      }
+
+      function enterEdit(event) {
+        if (event && event.target.closest(".toc, .rail")) return;
+        doc.setAttribute("contenteditable", "true");
+        doc.classList.add("editing");
+        doc.focus();
+        setStatus("Editing. Click outside to save.");
+      }
+
+      function exitEdit() {
+        if (doc.getAttribute("contenteditable") !== "true") return;
+        doc.setAttribute("contenteditable", "false");
+        doc.classList.remove("editing");
+        if (dirty) saveDraft();
+        else setStatus("No changes.");
+      }
+
+      doc.addEventListener("dblclick", enterEdit);
+      doc.addEventListener("input", function () {
+        window.clearTimeout(timer);
+        dirty = true;
+        setStatus("Editing...");
+        timer = window.setTimeout(function () {
+          localStorage.setItem(key, doc.innerHTML);
+          setStatus("Browser draft saved. Click outside to write file.");
+        }, 450);
+      });
+      doc.addEventListener("focusout", function () {
+        window.setTimeout(function () {
+          if (!doc.contains(document.activeElement)) {
+            window.clearTimeout(timer);
+            exitEdit();
+          }
+        }, 0);
+      });
+
+      function initToc() {
+        const links = Array.from(document.querySelectorAll(".toc-link"));
+        const byId = new Map(links.map(function (link) {
+          return [link.getAttribute("href").slice(1), link];
+        }));
+        function setActive(id) {
+          links.forEach(function (link) {
+            link.classList.toggle("active", link === byId.get(id));
+          });
+        }
+        links.forEach(function (link) {
+          link.addEventListener("click", function () {
+            setActive(link.getAttribute("href").slice(1));
+          });
+        });
+        if (!("IntersectionObserver" in window)) return;
+        const observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) setActive(entry.target.id);
+          });
+        }, { rootMargin: "-20% 0px -65% 0px", threshold: 0 });
+        document.querySelectorAll("section[id]").forEach(function (section) {
+          observer.observe(section);
+        });
+      }
+
+      initToc();
+    })();
+  </script>
+</body>
+</html>

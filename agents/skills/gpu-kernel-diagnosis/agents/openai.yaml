@@ -1,0 +1,4 @@
+interface:
+  display_name: "GPU Kernel Diagnosis"
+  short_description: "Diagnose GPU kernel optimization bottlenecks"
+  default_prompt: "Use $gpu-kernel-diagnosis to diagnose this Triton or CUDA kernel optimization with evidence."

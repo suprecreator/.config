@@ -1,0 +1,4 @@
+interface:
+  display_name: "TLDR"
+  short_description: "Make answers short, clear, and scannable"
+  default_prompt: "Use $tldr to answer clearly without turning the response into a long essay."

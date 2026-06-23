@@ -1,0 +1,4 @@
+interface:
+  display_name: "DasHTML"
+  short_description: "Create concise self-contained HTML dashboards"
+  default_prompt: "Create a self-contained HTML dashboard from the current project context."

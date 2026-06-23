@@ -1,0 +1,4 @@
+interface:
+  display_name: "Compiler Issue Investigator"
+  short_description: "Investigate compiler bugs with numbered evidence"
+  default_prompt: "Use $compiler-issue-investigator to investigate this compiler issue, create numbered artifacts, run isolated local or remote validation with captured evidence, and report root cause or handoff status."

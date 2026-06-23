@@ -1,0 +1,312 @@
+# Personal remote development entrypoints.
+#
+# GNU Make prefers GNUmakefile over makefile, so invoke this file explicitly:
+#   make -f remote sync SYNC=git
+#   make -f remote sync SYNC=patch
+#   make -f remote sync SYNC=file FILE=path/to/file
+#   make -f remote cleanup
+#   make -f remote ccache-setup
+#   make -f remote venv-setup
+#   make -f remote case CASE=007-my-issue
+#   make -f remote dev-install CASE=007-my-issue
+#   make -f remote test CASE=007-my-issue
+#   make -f remote all CASE=007-my-issue
+#
+# Optional local override file:
+#   .remote-dev.env
+
+-include .remote-dev.env
+
+REMOTE_HOST ?= u22
+REMOTE_WORKTREE ?= /root/repos/gpnpu/triton-dev
+REMOTE_RUN_ROOT ?= /root/repos/gpnpu/nova-runs/triton
+REMOTE_BUILD_DIR ?= build/cmake.linux-x86_64-cpython-3.13
+REMOTE_MAKE ?= make
+REMOTE_SSH_OPTS ?= -o BatchMode=yes -o ConnectTimeout=10
+REMOTE_CCACHE_DIR ?= /root/.cache/ccache/triton
+REMOTE_CCACHE_MAXSIZE ?= 30G
+REMOTE_VENV ?= $(REMOTE_WORKTREE)/.venv-remote-dev
+REMOTE_PYTHON_BOOTSTRAP ?= python3.13
+REMOTE_PYTHON ?= $(REMOTE_VENV)/bin/python
+REMOTE_BRANCH ?=
+REMOTE_GIT_REMOTE ?= origin
+SYNC ?= git
+REMOTE_SYNC_MODE ?= $(SYNC)
+REMOTE_DIRTY ?= stash
+REMOTE_CLEAN_AFTER ?= stash
+REMOTE_PATCH_FILE ?= /tmp/triton-remote-sync.patch
+FILE ?=
+CASE ?=
+CASE_TITLE ?= Remote compiler validation case.
+LOCAL_BRANCH := $(shell git branch --show-current 2>/dev/null)
+LOCAL_HEAD_SHORT := $(shell git rev-parse --short HEAD 2>/dev/null)
+REMOTE_STASH_TAG ?= remote-dev
+REMOTE_STASH_MSG ?= $(REMOTE_STASH_TAG) sync=$(REMOTE_SYNC_MODE) branch=$(LOCAL_BRANCH) head=$(LOCAL_HEAD_SHORT) case=$(CASE) file=$(FILE)
+REMOTE_VALIDATE_STASH_MSG ?= $(REMOTE_STASH_TAG) sync=validate branch=$(LOCAL_BRANCH) head=$(LOCAL_HEAD_SHORT) case=$(CASE)
+
+REMOTE_SSH := ssh $(REMOTE_SSH_OPTS) $(REMOTE_HOST)
+REMOTE_ENV := export VIRTUAL_ENV="$(REMOTE_VENV)" PATH="$(REMOTE_VENV)/bin:$$PATH" PYTHONNOUSERSITE=1 CCACHE_DIR="$(REMOTE_CCACHE_DIR)" CCACHE_BASEDIR="$(REMOTE_WORKTREE)" CCACHE_NOHASHDIR=true TRITON_BUILD_WITH_CCACHE=1
+REMOTE_VENV_GUARD := { test -x "$(REMOTE_PYTHON)" || $(REMOTE_PYTHON_BOOTSTRAP) -m venv "$(REMOTE_VENV)"; } && "$(REMOTE_PYTHON)" -m pip --version >/dev/null
+REMOTE_RUN := $(REMOTE_SSH) 'cd "$(REMOTE_WORKTREE)" && $(REMOTE_ENV) &&
+
+define remote_dirty_guard
+	mode="$(REMOTE_DIRTY)"; \
+	if test -n "$$(git status --porcelain)"; then \
+	  echo "remote worktree has local changes:"; \
+	  git status --short; \
+	  case "$$mode" in \
+	    stash) git stash push -u -m "$(REMOTE_STASH_MSG) reason=pre-sync ts=$$(date -u +%Y%m%d-%H%M%S)" ;; \
+	    refuse) echo "error: REMOTE_DIRTY=refuse blocks dirty remote sync"; exit 1 ;; \
+	    keep) echo "warning: keeping dirty remote worktree" ;; \
+	    *) echo "error: REMOTE_DIRTY must be stash, refuse, or keep"; exit 1 ;; \
+	  esac; \
+	fi
+endef
+
+define remote_cleanup
+	if test -n "$$(git status --porcelain)"; then \
+	  echo "remote worktree has leftover local changes:"; \
+	  git status --short; \
+	  git stash push -u -m "$(REMOTE_VALIDATE_STASH_MSG) reason=post-validation-cleanup ts=$$(date -u +%Y%m%d-%H%M%S)"; \
+	else \
+	  echo "remote worktree clean"; \
+	fi
+endef
+
+define capture_remote
+	@test -n "$(CASE)" || (echo "error: pass CASE=NNN-slug"; exit 1)
+	@case "$(CASE)" in [0-9][0-9][0-9]*) ;; *) echo "error: CASE must start with NNN, got $(CASE)"; exit 1;; esac
+	@set -u; \
+	case_dir="artifacts/$(CASE)"; \
+	run_id="$$(date +%Y%m%d-%H%M%S)-$(2)"; \
+	run_dir="$$case_dir/runs/$$run_id"; \
+	mkdir -p "$$run_dir/artifacts"; \
+	$(MAKE) -f remote case CASE="$(CASE)" CASE_TITLE="$(CASE_TITLE)" >/dev/null; \
+	printf '%s\n' 'cd "$(REMOTE_WORKTREE)" && $(1)' > "$$run_dir/cmd.sh"; \
+	{ \
+	  echo "host=$(REMOTE_HOST)"; \
+	  echo "worktree=$(REMOTE_WORKTREE)"; \
+	  echo "local_cwd=$$(pwd)"; \
+	  echo "case=$$case_dir"; \
+	  echo "run_id=$$run_id"; \
+	  echo "ccache_dir=$(REMOTE_CCACHE_DIR)"; \
+	  echo "ccache_basedir=$(REMOTE_WORKTREE)"; \
+	  echo "triton_build_with_ccache=1"; \
+	  echo "remote_venv=$(REMOTE_VENV)"; \
+	  echo "started_at=$$(date -u +%Y-%m-%dT%H:%M:%SZ)"; \
+	  $(REMOTE_SSH) 'cd "$(REMOTE_WORKTREE)" && $(REMOTE_ENV) && echo "remote_pwd=$$(pwd)" && hostname && uname -a && if test -x "$(REMOTE_PYTHON)"; then "$(REMOTE_PYTHON)" -c '\''import sys; print("python_executable=" + sys.executable); print("python_prefix=" + sys.prefix); print("python_version=" + sys.version.replace("\n", " "))'\''; else echo "python_executable=missing:$(REMOTE_PYTHON)"; fi && if command -v ccache >/dev/null; then ccache --version | head -n 1 && ccache -s; else echo "ccache not found"; fi'; \
+	} > "$$run_dir/env.txt" 2>&1; \
+	start_epoch="$$(date +%s)"; \
+		$(REMOTE_RUN) $(1)' > "$$run_dir/stdout.log" 2> "$$run_dir/stderr.log"; \
+		status="$$?"; \
+		cleanup_status="not-requested"; \
+		if test "$(REMOTE_CLEAN_AFTER)" = "stash"; then \
+		  $(REMOTE_SSH) 'cd "$(REMOTE_WORKTREE)" && $(remote_cleanup)' > "$$run_dir/cleanup.log" 2>&1 || cleanup_status="failed"; \
+		  if test "$$cleanup_status" != "failed"; then cleanup_status="done"; fi; \
+		elif test "$(REMOTE_CLEAN_AFTER)" = "keep"; then \
+		  echo "REMOTE_CLEAN_AFTER=keep; remote dirty state intentionally left unchanged" > "$$run_dir/cleanup.log"; \
+		  cleanup_status="kept"; \
+		else \
+		  echo "error: REMOTE_CLEAN_AFTER must be stash or keep" > "$$run_dir/cleanup.log"; \
+		  cleanup_status="invalid"; \
+		fi; \
+		if test "$$status" = "0" && { test "$$cleanup_status" = "failed" || test "$$cleanup_status" = "invalid"; }; then status=1; fi; \
+		end_epoch="$$(date +%s)"; \
+		duration="$$((end_epoch - start_epoch))"; \
+	{ \
+	  echo "{"; \
+	  echo "  \"run_id\": \"$$run_id\","; \
+	  echo "  \"case\": \"$(CASE)\","; \
+		  echo "  \"remote_host\": \"$(REMOTE_HOST)\","; \
+		  echo "  \"remote_worktree\": \"$(REMOTE_WORKTREE)\","; \
+		  echo "  \"exit_code\": $$status,"; \
+		  echo "  \"cleanup_status\": \"$$cleanup_status\","; \
+		  echo "  \"duration_seconds\": $$duration"; \
+		  echo "}"; \
+	} > "$$run_dir/metadata.json"; \
+	{ \
+	  echo ""; \
+	  echo "## $$run_id"; \
+	  echo ""; \
+	  echo "- Command: \`cd $(REMOTE_WORKTREE) && $(1)\`"; \
+	  echo "- Exit code: $$status"; \
+	  echo "- Duration: $${duration}s"; \
+	  echo "- stdout: [stdout.log](runs/$$run_id/stdout.log)"; \
+		  echo "- stderr: [stderr.log](runs/$$run_id/stderr.log)"; \
+		  echo "- cleanup: [cleanup.log](runs/$$run_id/cleanup.log)"; \
+		  echo "- env: [env.txt](runs/$$run_id/env.txt)"; \
+		  echo "- metadata: [metadata.json](runs/$$run_id/metadata.json)"; \
+	} >> "$$case_dir/03-remote-evidence.md"; \
+	echo "artifact run: $$run_dir"; \
+	exit "$$status"
+endef
+
+.PHONY: help
+help:
+	@echo "remote development targets:"
+	@echo "  make -f remote sync         Sync by SYNC=git|patch|file"
+	@echo "                              Remote dirty policy: REMOTE_DIRTY=stash|refuse|keep"
+	@echo "                              After validation: REMOTE_CLEAN_AFTER=stash|keep"
+	@echo "  make -f remote status       Show remote git status"
+	@echo "  make -f remote cleanup      Stash leftover remote experiment changes"
+	@echo "  make -f remote stash-list   Show remote stash list"
+	@echo "  make -f remote stash-show   Show one remote stash with STASH=stash@{N}"
+	@echo "  make -f remote stash-drop   Drop one remote stash with STASH=stash@{N}"
+	@echo "  make -f remote ccache-setup Configure shared remote ccache"
+	@echo "  make -f remote ccache-status Show remote ccache stats"
+	@echo "  make -f remote ccache-zero   Zero remote ccache stats"
+	@echo "  make -f remote venv-setup    Create/check per-worktree remote venv"
+	@echo "  make -f remote venv-status   Show remote venv path and Python"
+	@echo "  make -f remote sync-git     Push local branch, then pull it on remote"
+	@echo "  make -f remote sync-patch   Copy git diff HEAD as a patch and apply it remotely"
+	@echo "  make -f remote sync-file    Copy one file to the same path remotely with FILE=..."
+	@echo "  make -f remote case         Create artifacts/NNN-* case scaffold"
+	@echo "  make -f remote doctor       Check local tools and remote worktree"
+	@echo "  make -f remote dev-install  Run remote make dev-install with CASE=NNN-*"
+	@echo "  make -f remote build        Build remote ngu-opt with CASE=NNN-*"
+	@echo "  make -f remote test         Run remote make test-nova with CASE=NNN-*"
+	@echo "  make -f remote all          Run remote make all with CASE=NNN-*"
+	@echo "  make -f remote shell        Open shell in remote worktree"
+
+.PHONY: sync
+sync:
+	@case "$(REMOTE_SYNC_MODE)" in \
+	  git) $(MAKE) -f remote sync-git ;; \
+	  patch) $(MAKE) -f remote sync-patch ;; \
+	  file) $(MAKE) -f remote sync-file FILE="$(FILE)" ;; \
+	  *) echo "error: REMOTE_SYNC_MODE must be git, patch, or file"; exit 1 ;; \
+	esac
+
+.PHONY: status
+status:
+	$(REMOTE_SSH) 'cd "$(REMOTE_WORKTREE)" && git status --short'
+
+.PHONY: cleanup
+cleanup:
+	$(REMOTE_SSH) 'cd "$(REMOTE_WORKTREE)" && $(remote_cleanup)'
+
+.PHONY: stash-list
+stash-list:
+	$(REMOTE_SSH) 'cd "$(REMOTE_WORKTREE)" && git stash list --date=local'
+
+.PHONY: stash-show
+stash-show:
+	@test -n "$(STASH)" || (echo "error: pass STASH='stash@{N}'"; exit 1)
+	$(REMOTE_SSH) 'cd "$(REMOTE_WORKTREE)" && git stash show --stat "$(STASH)" && git stash show --name-status "$(STASH)"'
+
+.PHONY: stash-drop
+stash-drop:
+	@test -n "$(STASH)" || (echo "error: pass STASH='stash@{N}'"; exit 1)
+	$(REMOTE_SSH) 'cd "$(REMOTE_WORKTREE)" && git stash drop "$(STASH)"'
+
+.PHONY: ccache-setup
+ccache-setup:
+	$(REMOTE_SSH) 'command -v ccache >/dev/null || (echo "error: ccache not found on $(REMOTE_HOST)"; exit 1); \
+	  mkdir -p "$(REMOTE_CCACHE_DIR)"; \
+	  CCACHE_DIR="$(REMOTE_CCACHE_DIR)" ccache --max-size="$(REMOTE_CCACHE_MAXSIZE)"; \
+	  CCACHE_DIR="$(REMOTE_CCACHE_DIR)" ccache -s'
+
+.PHONY: ccache-status
+ccache-status:
+	$(REMOTE_SSH) 'CCACHE_DIR="$(REMOTE_CCACHE_DIR)" ccache -s'
+
+.PHONY: ccache-zero
+ccache-zero:
+	$(REMOTE_SSH) 'CCACHE_DIR="$(REMOTE_CCACHE_DIR)" ccache -z'
+
+.PHONY: venv-setup
+venv-setup:
+	$(REMOTE_SSH) 'cd "$(REMOTE_WORKTREE)" && $(REMOTE_ENV) && $(REMOTE_VENV_GUARD) && "$(REMOTE_PYTHON)" -c '\''import sys; print(sys.executable); print(sys.prefix); print(sys.version)'\'''
+
+.PHONY: venv-status
+venv-status:
+	$(REMOTE_SSH) 'cd "$(REMOTE_WORKTREE)" && if test -x "$(REMOTE_PYTHON)"; then "$(REMOTE_PYTHON)" -c '\''import sys; print("python_executable=" + sys.executable); print("python_prefix=" + sys.prefix); print("python_version=" + sys.version.replace("\n", " "))'\''; "$(REMOTE_PYTHON)" -m pip --version; else echo "missing remote venv python: $(REMOTE_PYTHON)"; fi; if test -L "$(REMOTE_VENV)"; then echo "warning: REMOTE_VENV is symlink -> $$(readlink -f "$(REMOTE_VENV)")"; fi'
+
+.PHONY: sync-git
+sync-git:
+	@branch="$(REMOTE_BRANCH)"; \
+	if test -z "$$branch"; then branch="$$(git branch --show-current)"; fi; \
+	test -n "$$branch" || (echo "error: no current git branch"; exit 1); \
+	git push "$(REMOTE_GIT_REMOTE)" "$$branch"; \
+	$(REMOTE_SSH) 'cd "$(REMOTE_WORKTREE)" && \
+	  $(remote_dirty_guard) && \
+	  branch='"$$branch"' && \
+	  git fetch "$(REMOTE_GIT_REMOTE)" "$$branch" && \
+	  (git switch "$$branch" 2>/dev/null || git switch -c "$$branch" --track "$(REMOTE_GIT_REMOTE)/$$branch") && \
+	  git pull --ff-only "$(REMOTE_GIT_REMOTE)" "$$branch"'
+
+.PHONY: sync-patch
+sync-patch:
+	@local_head="$$(git rev-parse HEAD 2>/dev/null)"; \
+	test -n "$$local_head" || (echo "error: cannot resolve local HEAD"; exit 1); \
+	tmp_patch="$$(mktemp -t triton-remote-sync.XXXXXX.patch)"; \
+	git diff --binary HEAD > "$$tmp_patch"; \
+	if ! test -s "$$tmp_patch"; then \
+	  echo "no tracked local diff to sync"; \
+	  rm -f "$$tmp_patch"; \
+	  exit 0; \
+	fi; \
+	scp "$$tmp_patch" "$(REMOTE_HOST):$(REMOTE_PATCH_FILE)"; \
+	rm -f "$$tmp_patch"; \
+	$(REMOTE_SSH) 'cd "$(REMOTE_WORKTREE)" && \
+	  $(remote_dirty_guard) && \
+	  test "$$(git rev-parse HEAD)" = '"$$local_head"' && \
+	  git diff --quiet && git diff --cached --quiet && \
+	  git apply --whitespace=nowarn "$(REMOTE_PATCH_FILE)"'
+
+.PHONY: sync-file
+sync-file:
+	@test -n "$(FILE)" || (echo "error: pass FILE=path/to/file"; exit 1)
+	@case "$(FILE)" in /*) echo "error: FILE must be relative to repo root"; exit 1;; esac
+	@test -f "$(FILE)" || (echo "error: FILE not found: $(FILE)"; exit 1)
+	$(REMOTE_SSH) 'cd "$(REMOTE_WORKTREE)" && $(remote_dirty_guard) && mkdir -p "$$(dirname "$(FILE)")"'
+	scp "$(FILE)" "$(REMOTE_HOST):$(REMOTE_WORKTREE)/$(FILE)"
+
+.PHONY: case
+case:
+	@test -n "$(CASE)" || (echo "error: pass CASE=NNN-slug"; exit 1)
+	@case "$(CASE)" in [0-9][0-9][0-9]*) ;; *) echo "error: CASE must start with NNN, got $(CASE)"; exit 1;; esac
+	@case_dir="artifacts/$(CASE)"; \
+	mkdir -p "$$case_dir/runs" "$$case_dir/tests/original" "$$case_dir/tests/minimized" "$$case_dir/tests/expected" "$$case_dir/export"; \
+	test -f "$$case_dir/00-README.md" || printf '# %s\n\nStatus: open\n\nOne-line conclusion: investigation not started.\n\nReading order:\n\n1. [Problem](01-problem.md)\n2. [Code path](02-code-path.md)\n3. [Remote evidence](03-remote-evidence.md)\n4. [Root cause](04-root-cause.md)\n5. [Validation or repro code](05-validation-or-repro-code.md)\n6. [Backend validation guide](06-backend-validation-guide.md)\n7. [Next actions](07-next-actions.md)\n\nSkills used: compiler-issue-investigator\n' "$(CASE_TITLE)" > "$$case_dir/00-README.md"; \
+	test -f "$$case_dir/01-problem.md" || printf '# Problem\n\n## Symptom\n\nTBD.\n\n## Expected Behavior\n\nTBD.\n\n## Environment\n\nRemote host: `%s`\n\nRemote worktree: `%s`\n\n## Success Criteria\n\nTBD.\n' "$(REMOTE_HOST)" "$(REMOTE_WORKTREE)" > "$$case_dir/01-problem.md"; \
+	test -f "$$case_dir/02-code-path.md" || printf '# Code Path\n\nTBD.\n' > "$$case_dir/02-code-path.md"; \
+	test -f "$$case_dir/03-remote-evidence.md" || printf '# Remote Evidence\n\nRemote runs captured by `make -f remote <target> CASE=%s` append below.\n' "$(CASE)" > "$$case_dir/03-remote-evidence.md"; \
+	test -f "$$case_dir/04-root-cause.md" || printf '# Root Cause\n\nTBD.\n' > "$$case_dir/04-root-cause.md"; \
+	test -f "$$case_dir/05-validation-or-repro-code.md" || printf '# Validation Or Repro Code\n\nPlace minimal repro commands, scripts, or links to `tests/` here.\n' > "$$case_dir/05-validation-or-repro-code.md"; \
+	test -f "$$case_dir/06-backend-validation-guide.md" || printf '# Backend Validation Guide\n\nTBD.\n' > "$$case_dir/06-backend-validation-guide.md"; \
+	test -f "$$case_dir/07-next-actions.md" || printf '# Next Actions\n\nTBD.\n' > "$$case_dir/07-next-actions.md"; \
+	echo "$$case_dir"
+
+.PHONY: doctor
+doctor:
+	@command -v ssh >/dev/null || (echo "error: ssh not found"; exit 1)
+	$(REMOTE_SSH) 'test -d "$(REMOTE_WORKTREE)" && echo "remote worktree OK: $(REMOTE_WORKTREE)"'
+
+.PHONY: dev-install
+dev-install:
+	$(call capture_remote,$(REMOTE_VENV_GUARD) && $(REMOTE_MAKE) dev-install PYTHON="$(REMOTE_PYTHON)",dev-install)
+
+.PHONY: build
+build:
+	$(call capture_remote,$(REMOTE_VENV_GUARD) && cmake --build "$(REMOTE_BUILD_DIR)" --target ngu-opt,build)
+
+.PHONY: test
+test:
+	$(call capture_remote,$(REMOTE_VENV_GUARD) && $(REMOTE_MAKE) test-nova PYTHON="$(REMOTE_PYTHON)",test-nova)
+
+.PHONY: test-nova-lit
+test-nova-lit:
+	$(call capture_remote,$(REMOTE_VENV_GUARD) && $(REMOTE_MAKE) test-nova-lit PYTHON="$(REMOTE_PYTHON)",test-nova-lit)
+
+.PHONY: test-nova-python
+test-nova-python:
+	$(call capture_remote,$(REMOTE_VENV_GUARD) && $(REMOTE_MAKE) test-nova-python PYTHON="$(REMOTE_PYTHON)",test-nova-python)
+
+.PHONY: all
+all:
+	$(call capture_remote,$(REMOTE_VENV_GUARD) && $(REMOTE_MAKE) all PYTHON="$(REMOTE_PYTHON)",all)
+
+.PHONY: shell
+shell:
+	$(REMOTE_SSH) 'cd "$(REMOTE_WORKTREE)" && exec bash'

@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="zh-CN" data-dashtml-path="__ABS_HTML_PATH__">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>__DASHBOARD_TITLE__</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #151515;
+      --panel: #242424;
+      --panel-2: #2c2c2c;
+      --text: #f2f2f2;
+      --muted: #b1b1b1;
+      --subtle: #777777;
+      --line: #3f3f3f;
+      --accent: #79b8ff;
+      --green: #44d07b;
+      --amber: #f4b544;
+      --red: #ff776d;
+      --radius: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.58; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    h1, h2, h3, p { margin: 0; }
+    code, .mono {
+      font-family: var(--mono);
+      font-size: 0.92em;
+      background: #3a3a3a;
+      border-radius: 7px;
+      padding: 0.08rem 0.35rem;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 200px minmax(520px, 920px) 320px;
+      gap: 24px;
+      padding: 26px 24px 48px;
+      align-items: start;
+      justify-content: center;
+      overflow-x: clip;
+    }
+    .content { width: 100%; max-width: 920px; min-width: 0; padding-top: 4px; }
+    .topbar { margin-bottom: 18px; }
+    .eyebrow { color: var(--muted); font-size: 13px; margin-bottom: 4px; }
+    h1 { font-size: 25px; font-weight: 680; line-height: 1.2; }
+    h2 { font-size: 18px; margin-bottom: 12px; }
+    h3 { font-size: 15px; margin-bottom: 8px; }
+
+    .toc { position: sticky; top: 24px; max-height: calc(100vh - 48px); padding: 12px; color: var(--muted); font-size: 13px; min-width: 0; }
+    .toc-title { color: var(--subtle); font-size: 12px; margin-bottom: 8px; padding: 0 8px; }
+    .toc-list { display: grid; gap: 4px; }
+    .toc-link { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; align-items: center; border-radius: 8px; color: var(--muted); padding: 7px 8px; text-decoration: none; min-width: 0; }
+    .toc-link:hover { background: rgba(255, 255, 255, 0.045); text-decoration: none; }
+    .toc-link.active { background: rgba(90, 167, 255, 0.14); color: #d7eaff; }
+    .toc-index { color: var(--subtle); font-family: var(--mono); font-size: 12px; }
+    .toc-link span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .doc { outline: none; }
+    .doc[contenteditable="true"]:focus { outline: none; }
+    .doc.editing { caret-color: var(--accent); }
+    .section { margin-bottom: 28px; scroll-margin-top: 24px; }
+    .section-body { display: grid; gap: 14px; }
+    .lead { font-size: 17px; color: #dedede; max-width: 860px; }
+    .cards, .flow { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); }
+    .card, .note { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; min-width: 0; }
+    .note.info { border-left: 4px solid var(--accent); }
+    .note.ok { border-left: 4px solid var(--green); }
+    .note.warn { border-left: 4px solid var(--amber); }
+    .list { margin: 0; padding-left: 22px; color: #e8e8e8; }
+    .list li { margin: 8px 0; }
+    .table-scroll { max-width: 100%; overflow-x: auto; border-radius: var(--radius); }
+    table { width: 100%; min-width: 620px; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+    th, td { padding: 11px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; background: #2d2d2d; }
+    tr:last-child td { border-bottom: 0; }
+    .pill { display: inline-flex; width: fit-content; align-items: center; border-radius: 999px; padding: 3px 8px; font-size: 12px; font-weight: 650; background: #3a3a3a; color: #dfdfdf; white-space: nowrap; }
+    .pill.green { color: #d8ffe7; background: rgba(68, 208, 123, 0.18); }
+    .pill.amber { color: #ffe8b6; background: rgba(244, 181, 68, 0.18); }
+    .pill.red { color: #ffd9d6; background: rgba(255, 119, 109, 0.16); }
+
+    .annotation-dock { margin-top: 18px; display: grid; grid-template-columns: minmax(280px, 1fr) minmax(420px, 1.15fr); gap: 14px; align-items: stretch; min-width: 0; }
+    .notes-panel { width: 100%; min-height: 260px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, 0.025); color: #e8e8e8; outline: none; white-space: pre-wrap; overflow-wrap: anywhere; resize: vertical; box-sizing: border-box; font: inherit; line-height: 1.55; }
+    .notes-panel:focus { border-color: rgba(121, 184, 255, 0.55); background: rgba(90, 167, 255, 0.055); }
+    .notes-panel::placeholder { color: var(--subtle); }
+    .whiteboard { border: 1px solid var(--line); border-radius: 12px; background: #1c1c1c; overflow: hidden; }
+    .board-head { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 8px; padding: 9px 10px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+    .board-tools { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-start; width: 100%; }
+    .board-tool { appearance: none; background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 3px 8px; color: var(--muted); cursor: pointer; font: inherit; font-size: 12px; user-select: none; }
+    .board-tool.active { border-color: rgba(90, 167, 255, 0.55); background: rgba(90, 167, 255, 0.16); color: #d7eaff; }
+    .board-tool[data-tool="delete"] { color: #f0b6b1; }
+    .board-canvas-wrap {
+      height: 260px;
+      background:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+        #1b1b1b;
+      background-size: 24px 24px;
+    }
+    .board-canvas { display: block; width: 100%; height: 260px; }
+
+    .rail { position: sticky; top: 22px; align-self: start; max-height: calc(100vh - 44px); overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 18px; }
+    .rail-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-weight: 650; margin-bottom: 10px; }
+    .rail-section { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
+    .rail-list { display: grid; gap: 8px; }
+    .rail-item { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: center; color: var(--text); font-size: 14px; }
+    .rail-item .icon { color: var(--muted); text-align: center; }
+    .rail-item .value { color: var(--subtle); font-size: 12px; text-align: right; }
+    .status-line { margin-top: 10px; color: var(--subtle); font-size: 12px; }
+    .save-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: var(--green); margin-right: 6px; }
+
+    @media (max-width: 1500px) {
+      .app { grid-template-columns: minmax(0, 1fr) 340px; }
+      .toc { grid-column: 1 / -1; position: static; max-height: none; padding: 0; }
+      .toc-list { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+      .toc-link { grid-template-columns: auto auto; white-space: nowrap; }
+    }
+    @media (max-width: 1080px) {
+      .app { grid-template-columns: 1fr; }
+      .annotation-dock { grid-template-columns: 1fr; }
+      .rail { position: static; max-height: none; }
+    }
+    @media (max-width: 760px) {
+      .app { padding: 18px 14px 36px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <nav class="toc" aria-label="Section navigation">
+      <div class="toc-title">Contents</div>
+      <div class="toc-list">
+        <a class="toc-link active" href="#goal"><span class="toc-index">01</span><span>__SECTION_1_TITLE__</span></a>
+        <a class="toc-link" href="#changes"><span class="toc-index">02</span><span>__SECTION_2_TITLE__</span></a>
+        <a class="toc-link" href="#details"><span class="toc-index">03</span><span>__SECTION_3_TITLE__</span></a>
+      </div>
+    </nav>
+
+    <main class="content">
+      <header class="topbar">
+        <div class="eyebrow">__EYEBROW__</div>
+        <h1>__DASHBOARD_TITLE__</h1>
+      </header>
+
+      <article id="editableDoc" class="doc" contenteditable="false" spellcheck="false" tabindex="0">
+        <section class="section" id="goal">
+          <h2>1. __SECTION_1_TITLE__</h2>
+          <div class="section-body">
+            <p class="lead">__GOAL_SUMMARY__</p>
+            <div class="cards">
+              <div class="card"><h3>目标</h3><p>__GOAL_CARD__</p></div>
+              <div class="card"><h3>方案</h3><p>__PLAN_CARD__</p></div>
+              <div class="card"><h3>边界</h3><p>__SCOPE_CARD__</p></div>
+            </div>
+          </div>
+          <div class="annotation-dock" contenteditable="false" aria-label="目标批注">
+            <textarea class="notes-panel" spellcheck="false" placeholder="写备注、临时结论、补充链接..."></textarea>
+            <div class="whiteboard" data-board="goal">
+              <div class="board-head"><span>注释 / 白板</span><div class="board-tools">__WHITEBOARD_TOOLS__</div></div>
+              <div class="board-canvas-wrap"><canvas class="board-canvas" width="920" height="260"></canvas></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="changes">
+          <h2>2. __SECTION_2_TITLE__</h2>
+          <div class="section-body">
+            <div class="note info"><h3>__CHANGE_TITLE__</h3><p>__CHANGE_TEXT__</p></div>
+            <div class="note warn"><h3>__TRADEOFF_TITLE__</h3><p>__TRADEOFF_TEXT__</p></div>
+          </div>
+          <div class="annotation-dock" contenteditable="false" aria-label="改动批注">
+            <textarea class="notes-panel" spellcheck="false" placeholder="写备注、review 结论、待确认点..."></textarea>
+            <div class="whiteboard" data-board="changes">
+              <div class="board-head"><span>注释 / 白板</span><div class="board-tools">__WHITEBOARD_TOOLS__</div></div>
+              <div class="board-canvas-wrap"><canvas class="board-canvas" width="920" height="260"></canvas></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="details">
+          <h2>3. __SECTION_3_TITLE__</h2>
+          <div class="section-body">
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Item</th><th>Status</th><th>Note</th></tr></thead>
+                <tbody>
+                  <tr><td>__ITEM__</td><td><span class="pill amber">__STATUS__</span></td><td>__NOTE__</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="note ok"><h3>Next</h3><ul class="list"><li>__NEXT_STEP__</li></ul></div>
+          </div>
+          <div class="annotation-dock" contenteditable="false" aria-label="细节批注">
+            <textarea class="notes-panel" spellcheck="false" placeholder="写验证补充、命令结果、下一步拆分..."></textarea>
+            <div class="whiteboard" data-board="details">
+              <div class="board-head"><span>注释 / 白板</span><div class="board-tools">__WHITEBOARD_TOOLS__</div></div>
+              <div class="board-canvas-wrap"><canvas class="board-canvas" width="920" height="260"></canvas></div>
+            </div>
+          </div>
+        </section>
+      </article>
+      <script id="whiteboardData" type="application/json">{}</script>
+    </main>
+
+    <aside class="rail">
+      <div class="rail-title"><span>Key Info</span><span class="pill amber">__STATUS_LABEL__</span></div>
+      <div class="rail-list">
+        <a class="rail-item" href="__PRIMARY_LINK__"><span class="icon">↗</span><span>__PRIMARY_LINK_LABEL__</span><span class="value">link</span></a>
+      </div>
+      <div class="rail-section">
+        <div class="rail-title"><span>Page Editing</span></div>
+        <div class="rail-list">
+          <div class="rail-item"><span class="icon">✓</span><span>Editable body</span><span class="value">double-click</span></div>
+          <div class="rail-item"><span class="icon">✓</span><span>Autosave</span><span class="value">file + browser</span></div>
+          <div class="rail-item"><span class="icon">●</span><span>Save server</span><span class="value">127.0.0.1:8765</span></div>
+        </div>
+        <p id="saveStatus" class="status-line"><span class="save-dot"></span>Double-click content to edit.</p>
+      </div>
+      <div class="rail-section">
+        <div class="rail-title"><span>Freshness</span></div>
+        <p class="status-line">__FRESHNESS_NOTE__</p>
+      </div>
+    </aside>
+  </div>
+
+  <script src="./vendor/fabric.min.js"></script>
+  <script>
+    (function () {
+      const doc = document.getElementById("editableDoc");
+      const status = document.getElementById("saveStatus");
+      const boardDataEl = document.getElementById("whiteboardData");
+      const sourcePath = document.documentElement.dataset.dashtmlPath || decodeURIComponent(location.pathname);
+      const key = "dashtml:" + sourcePath + ":editableDoc:v2";
+      const boardKey = "dashtml:" + sourcePath + ":whiteboards:v1";
+      const saveEndpoint = "http://127.0.0.1:8765/save";
+      let timer = null;
+      let boardTimer = null;
+      let dirty = false;
+      let saveController = null;
+      let boardData = {};
+      let activeBoardDelete = null;
+
+      function toolsHTML() {
+        return [
+          '<button class="board-tool active" type="button" data-tool="select">Select</button>',
+          '<button class="board-tool" type="button" data-tool="pen">Pen</button>',
+          '<button class="board-tool" type="button" data-tool="text">Text</button>',
+          '<button class="board-tool" type="button" data-tool="rect">Rect</button>',
+          '<button class="board-tool" type="button" data-tool="delete">Del</button>',
+          '<button class="board-tool" type="button" data-tool="clear">Clear</button>',
+        ].join("");
+      }
+
+      document.querySelectorAll(".board-tools").forEach(function (tools) {
+        if (tools.textContent.includes("__WHITEBOARD_TOOLS__")) tools.innerHTML = toolsHTML();
+      });
+
+      function setStatus(text) {
+        status.innerHTML = '<span class="save-dot"></span>' + text;
+      }
+      function parseJSON(text, fallback) {
+        try { return text ? JSON.parse(text) : fallback; } catch (_) { return fallback; }
+      }
+      function cleanWhiteboards(root) {
+        root.querySelectorAll(".whiteboard").forEach(function (board) {
+          board.querySelectorAll(".canvas-container").forEach(function (container) {
+            const cleanCanvas = document.createElement("canvas");
+            cleanCanvas.className = "board-canvas";
+            cleanCanvas.width = 920;
+            cleanCanvas.height = 260;
+            container.replaceWith(cleanCanvas);
+          });
+          const canvas = board.querySelector("canvas.board-canvas");
+          if (canvas) {
+            canvas.removeAttribute("style");
+            canvas.width = 920;
+            canvas.height = 260;
+          }
+          const tools = board.querySelector(".board-tools");
+          if (tools) tools.innerHTML = toolsHTML();
+        });
+      }
+      function syncTextareas(root) {
+        root.querySelectorAll("textarea.notes-panel").forEach(function (textarea) {
+          textarea.defaultValue = textarea.value;
+          textarea.textContent = textarea.value;
+        });
+      }
+      function serializeDocBody() {
+        syncTextareas(doc);
+        const clone = doc.cloneNode(true);
+        clone.setAttribute("contenteditable", "false");
+        clone.classList.remove("editing");
+        cleanWhiteboards(clone);
+        return clone.innerHTML;
+      }
+      function serializeDocument() {
+        syncTextareas(document);
+        const clone = document.documentElement.cloneNode(true);
+        const cloneDoc = clone.querySelector("#editableDoc");
+        if (cloneDoc) {
+          cloneDoc.setAttribute("contenteditable", "false");
+          cloneDoc.classList.remove("editing");
+        }
+        cleanWhiteboards(clone);
+        return "<!doctype html>\n" + clone.outerHTML;
+      }
+      function persistBoardData() {
+        boardDataEl.textContent = JSON.stringify(boardData);
+        localStorage.setItem(boardKey, boardDataEl.textContent);
+      }
+
+      const saved = localStorage.getItem(key);
+      if (saved && saved.includes("whiteboard")) {
+        doc.innerHTML = saved;
+        document.querySelectorAll(".board-tools").forEach(function (tools) { tools.innerHTML = toolsHTML(); });
+        setStatus("Draft restored from browser autosave.");
+      } else if (saved) {
+        localStorage.removeItem(key);
+      }
+      boardData = parseJSON(boardDataEl.textContent, {});
+      const savedBoards = parseJSON(localStorage.getItem(boardKey), null);
+      if (savedBoards && Object.keys(savedBoards).length) {
+        boardData = savedBoards;
+        persistBoardData();
+      }
+
+      async function saveFile() {
+        if (saveController) saveController.abort();
+        saveController = new AbortController();
+        persistBoardData();
+        const html = serializeDocument();
+        const response = await fetch(saveEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path: sourcePath, html }),
+          signal: saveController.signal,
+        });
+        if (!response.ok) throw new Error(await response.text());
+      }
+      function saveDraft() {
+        localStorage.setItem(key, serializeDocBody());
+        saveFile()
+          .then(function () { dirty = false; setStatus("Saved to file " + new Date().toLocaleTimeString() + "."); })
+          .catch(function (error) {
+            if (error.name === "AbortError") return;
+            setStatus("Browser draft saved; file server unavailable.");
+          });
+      }
+      function enterEdit(event) {
+        if (event && event.target.closest(".annotation-dock, .whiteboard, .toc, .rail")) return;
+        doc.setAttribute("contenteditable", "true");
+        doc.classList.add("editing");
+        doc.focus();
+        setStatus("Editing. Click outside to save.");
+      }
+      function exitEdit() {
+        if (doc.getAttribute("contenteditable") !== "true") return;
+        doc.setAttribute("contenteditable", "false");
+        doc.classList.remove("editing");
+        if (dirty) saveDraft();
+        else setStatus("No changes.");
+      }
+      doc.addEventListener("dblclick", enterEdit);
+      doc.addEventListener("input", function () {
+        window.clearTimeout(timer);
+        dirty = true;
+        setStatus("Editing...");
+        timer = window.setTimeout(function () {
+          localStorage.setItem(key, serializeDocBody());
+          setStatus("Browser draft saved. Click outside to write file.");
+        }, 450);
+      });
+      doc.addEventListener("focusout", function () {
+        window.setTimeout(function () {
+          if (!doc.contains(document.activeElement)) {
+            window.clearTimeout(timer);
+            exitEdit();
+          }
+        }, 0);
+      });
+
+      function initWhiteboards() {
+        if (!window.fabric) {
+          setStatus("Fabric.js unavailable; whiteboards are disabled.");
+          return;
+        }
+        document.querySelectorAll(".whiteboard").forEach(function (board) {
+          const boardId = board.dataset.board;
+          const canvasEl = board.querySelector("canvas.board-canvas");
+          const wrap = board.querySelector(".board-canvas-wrap");
+          ["click", "dblclick", "mousedown", "pointerdown"].forEach(function (eventName) {
+            board.addEventListener(eventName, function (event) { event.stopPropagation(); });
+          });
+          const canvas = new fabric.Canvas(canvasEl, { backgroundColor: "rgba(0,0,0,0)", preserveObjectStacking: true, selection: true });
+          canvas.setDimensions({ width: wrap.clientWidth || 920, height: 260 });
+          canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+          canvas.freeDrawingBrush.color = "#79b8ff";
+          canvas.freeDrawingBrush.width = 3;
+
+          function markBoardChanged() {
+            boardData[boardId] = canvas.toJSON();
+            persistBoardData();
+            window.clearTimeout(boardTimer);
+            setStatus("Whiteboard draft saved.");
+            boardTimer = window.setTimeout(function () {
+              saveFile()
+                .then(function () { setStatus("Whiteboard saved to file " + new Date().toLocaleTimeString() + "."); })
+                .catch(function (error) {
+                  if (error.name === "AbortError") return;
+                  setStatus("Whiteboard browser draft saved; file server unavailable.");
+                });
+            }, 600);
+          }
+          function setTool(toolName) {
+            board.querySelectorAll(".board-tool").forEach(function (tool) {
+              tool.classList.toggle("active", tool.dataset.tool === toolName);
+            });
+            canvas.isDrawingMode = toolName === "pen";
+            canvas.selection = toolName === "select";
+            canvas.defaultCursor = toolName === "pen" ? "crosshair" : "default";
+            board.dataset.activeTool = toolName;
+          }
+          function deleteSelection() {
+            const selected = canvas.getActiveObjects ? canvas.getActiveObjects() : [];
+            if (!selected.length) {
+              setStatus("Select a whiteboard object first.");
+              return false;
+            }
+            selected.forEach(function (object) { canvas.remove(object); });
+            if (canvas.discardActiveObject) canvas.discardActiveObject();
+            canvas.requestRenderAll();
+            setTool("select");
+            markBoardChanged();
+            return true;
+          }
+          function getCanvasPoint(event) {
+            if (canvas.getScenePoint) return canvas.getScenePoint(event);
+            if (canvas.getPointer) return canvas.getPointer(event);
+            return { x: event.offsetX || 20, y: event.offsetY || 20 };
+          }
+
+          activeBoardDelete = deleteSelection;
+          board.querySelectorAll(".board-tool").forEach(function (tool) {
+            tool.addEventListener("click", function () {
+              activeBoardDelete = deleteSelection;
+              const toolName = tool.dataset.tool;
+              if (toolName === "delete") { deleteSelection(); return; }
+              if (toolName === "clear") {
+                if (!window.confirm("Clear this whiteboard?")) return;
+                canvas.clear();
+                setTool("select");
+                markBoardChanged();
+                return;
+              }
+              setTool(toolName);
+            });
+          });
+          canvas.on("mouse:down", function (event) {
+            activeBoardDelete = deleteSelection;
+            const activeTool = board.dataset.activeTool || "select";
+            if (activeTool !== "text" && activeTool !== "rect") return;
+            const pointer = getCanvasPoint(event.e);
+            if (activeTool === "text") {
+              const text = new fabric.Textbox("note", {
+                left: pointer.x,
+                top: pointer.y,
+                width: 180,
+                fill: "#f2f2f2",
+                fontSize: 16,
+                fontFamily: "ui-sans-serif, system-ui, sans-serif",
+                backgroundColor: "rgba(90, 167, 255, 0.08)",
+              });
+              canvas.add(text);
+              canvas.setActiveObject(text);
+              if (text.enterEditing) { text.enterEditing(); text.selectAll(); }
+            } else {
+              const rect = new fabric.Rect({
+                left: pointer.x,
+                top: pointer.y,
+                width: 150,
+                height: 80,
+                fill: "rgba(90, 167, 255, 0.08)",
+                stroke: "#79b8ff",
+                strokeWidth: 2,
+                rx: 8,
+                ry: 8,
+              });
+              canvas.add(rect);
+              canvas.setActiveObject(rect);
+            }
+            setTool("select");
+            markBoardChanged();
+          });
+          canvas.on("selection:created", function () { activeBoardDelete = deleteSelection; });
+          canvas.on("selection:updated", function () { activeBoardDelete = deleteSelection; });
+          ["path:created", "object:modified", "object:removed", "text:changed"].forEach(function (eventName) {
+            canvas.on(eventName, markBoardChanged);
+          });
+          if (boardData[boardId]) {
+            const loaded = canvas.loadFromJSON(boardData[boardId], function () { canvas.requestRenderAll(); });
+            if (loaded && loaded.then) loaded.then(function () { canvas.requestRenderAll(); });
+          }
+          setTool("select");
+        });
+      }
+
+      function initToc() {
+        const links = Array.from(document.querySelectorAll(".toc-link"));
+        const byId = new Map(links.map(function (link) { return [link.getAttribute("href").slice(1), link]; }));
+        function setActive(id) {
+          links.forEach(function (link) { link.classList.toggle("active", link === byId.get(id)); });
+        }
+        links.forEach(function (link) {
+          link.addEventListener("click", function () { setActive(link.getAttribute("href").slice(1)); });
+        });
+        if (!("IntersectionObserver" in window)) return;
+        const observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) { if (entry.isIntersecting) setActive(entry.target.id); });
+        }, { rootMargin: "-20% 0px -65% 0px", threshold: 0 });
+        document.querySelectorAll("section[id]").forEach(function (section) { observer.observe(section); });
+      }
+
+      initWhiteboards();
+      initToc();
+      document.addEventListener("keydown", function (event) {
+        if (event.key !== "Delete" && event.key !== "Backspace") return;
+        if (!activeBoardDelete) return;
+        const tagName = event.target && event.target.tagName;
+        if (tagName === "INPUT" || tagName === "TEXTAREA") return;
+        if (doc.getAttribute("contenteditable") === "true" && !event.target.closest(".whiteboard")) return;
+        event.preventDefault();
+        activeBoardDelete();
+      });
+    })();
+  </script>
+</body>
+</html>

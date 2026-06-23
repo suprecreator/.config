@@ -1,0 +1,6 @@
+interface:
+  display_name: "State Machine HTML"
+  short_description: "Editable timeline state-machine dashboards"
+  default_prompt: "Use $state-machine-html to create an editable local HTML dashboard for this task state machine."
+policy:
+  allow_implicit_invocation: true

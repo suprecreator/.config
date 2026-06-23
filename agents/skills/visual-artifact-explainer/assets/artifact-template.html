@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visual Artifact</title>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #5b6675;
+      --line: #d8dee8;
+      --accent: #2563eb;
+      --good: #0f8a5f;
+      --warn: #b7791f;
+      --bad: #c2410c;
+      --shadow: 0 12px 30px rgba(23, 32, 42, .08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.5;
+    }
+    main {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+    header {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 48px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+    h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    p { margin: 0; }
+    .answer {
+      max-width: 780px;
+      font-size: 18px;
+      color: var(--muted);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 18px;
+      align-items: start;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 86px;
+    }
+    .metric strong {
+      display: block;
+      font-size: 24px;
+      line-height: 1.1;
+    }
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .steps {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .steps li {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .dot {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      color: #fff;
+      background: var(--accent);
+      font-weight: 700;
+      font-size: 13px;
+    }
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .node rect {
+      fill: #fff;
+      stroke: var(--line);
+      stroke-width: 1.5;
+      rx: 8;
+    }
+    .node text {
+      fill: var(--ink);
+      font-size: 14px;
+      font-weight: 650;
+    }
+    .arrow {
+      stroke: var(--accent);
+      stroke-width: 2;
+      fill: none;
+      marker-end: url(#arrow);
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--accent);
+      width: fit-content;
+    }
+    @media (max-width: 820px) {
+      main { width: min(100% - 24px, 680px); padding-top: 22px; }
+      .grid, .metric-row { grid-template-columns: 1fr; }
+      .panel { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <span class="tag">可视化分析</span>
+      <h1>问题标题</h1>
+      <p class="answer">一句话回答：把最重要的结论放在这里，让读者先知道答案，再看图理解原因。</p>
+    </header>
+
+    <section class="grid">
+      <article class="panel">
+        <h2>诊断图</h2>
+        <svg viewBox="0 0 760 360" role="img" aria-label="问题诊断流程图">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"></path>
+            </marker>
+          </defs>
+          <g class="node">
+            <rect x="30" y="130" width="150" height="70"></rect>
+            <text x="105" y="160" text-anchor="middle">症状</text>
+            <text x="105" y="182" text-anchor="middle" fill="#5b6675">发生了什么</text>
+          </g>
+          <path class="arrow" d="M 184 165 C 230 165, 250 92, 300 92"></path>
+          <path class="arrow" d="M 184 165 C 230 165, 250 238, 300 238"></path>
+          <g class="node">
+            <rect x="305" y="58" width="170" height="70"></rect>
+            <text x="390" y="88" text-anchor="middle">可能原因 A</text>
+            <text x="390" y="110" text-anchor="middle" fill="#5b6675">证据/信号</text>
+          </g>
+          <g class="node">
+            <rect x="305" y="204" width="170" height="70"></rect>
+            <text x="390" y="234" text-anchor="middle">可能原因 B</text>
+            <text x="390" y="256" text-anchor="middle" fill="#5b6675">证据/信号</text>
+          </g>
+          <path class="arrow" d="M 480 92 C 540 92, 548 165, 600 165"></path>
+          <path class="arrow" d="M 480 238 C 540 238, 548 165, 600 165"></path>
+          <g class="node">
+            <rect x="605" y="130" width="125" height="70"></rect>
+            <text x="667" y="160" text-anchor="middle">解决路径</text>
+            <text x="667" y="182" text-anchor="middle" fill="#5b6675">下一步</text>
+          </g>
+        </svg>
+      </article>
+
+      <aside class="panel">
+        <h2>关键判断</h2>
+        <ul class="steps">
+          <li><span class="dot">1</span><p>最可能的问题：写出根因或核心矛盾。</p></li>
+          <li><span class="dot">2</span><p>为什么：列出最有力的证据或逻辑链。</p></li>
+          <li><span class="dot">3</span><p>怎么解决：给出可执行的下一步。</p></li>
+        </ul>
+        <div class="metric-row">
+          <div class="metric"><strong>高</strong><span>影响</span></div>
+          <div class="metric"><strong>中</strong><span>置信度</span></div>
+          <div class="metric"><strong>低</strong><span>执行成本</span></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

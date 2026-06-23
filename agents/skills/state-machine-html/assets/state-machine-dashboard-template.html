@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>__DASHBOARD_TITLE__</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080b10;
+      --panel: #101722;
+      --panel-soft: #0d131c;
+      --ink: #edf4ff;
+      --muted: #98a7bb;
+      --faint: #647287;
+      --line: rgba(148, 166, 196, .25);
+      --green: #45dd96;
+      --amber: #ffc247;
+      --blue: #38c7ff;
+      --violet: #a995ff;
+      --red: #ff6475;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 34px;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    h1 {
+      font-size: 34px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h3 {
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+
+    .subtitle {
+      max-width: 680px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .status {
+      min-width: 228px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px 14px;
+      background: var(--panel);
+    }
+
+    .status small,
+    .eyebrow {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    .status strong {
+      display: block;
+      margin-top: 3px;
+      color: var(--amber);
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .save-state {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(148, 166, 196, .18);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .save-state b {
+      color: #c4d1e3;
+      font-weight: 850;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(420px, 1fr) 380px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .flow-panel,
+    .detail-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-soft);
+    }
+
+    .flow-panel { padding: 18px; }
+
+    .detail-panel {
+      min-height: 560px;
+      padding: 18px;
+      position: sticky;
+      top: 18px;
+    }
+
+    .flow {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 10px 0 10px 64px;
+    }
+
+    .flow:before {
+      content: "";
+      position: absolute;
+      left: 31px;
+      top: 28px;
+      bottom: 28px;
+      width: 2px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--green) 0 var(--done-stop), var(--amber) var(--done-stop) var(--current-stop), rgba(148, 166, 196, .35) var(--current-stop) 100%);
+    }
+
+    .flow-step {
+      position: relative;
+      min-height: 86px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px 14px;
+      color: var(--ink);
+      background: #0f1620;
+      cursor: pointer;
+      user-select: none;
+      min-width: 0;
+    }
+
+    .flow-step.done {
+      border-color: rgba(69, 221, 150, .55);
+      background: rgba(69, 221, 150, .075);
+    }
+
+    .flow-step.current {
+      border-color: rgba(255, 194, 71, .75);
+      background: rgba(255, 194, 71, .09);
+    }
+
+    .flow-step.selected {
+      box-shadow: inset 0 0 0 1px rgba(56, 199, 255, .58);
+    }
+
+    .flow-step:hover,
+    .flow-step:focus-visible {
+      border-color: rgba(56, 199, 255, .72);
+      outline: none;
+    }
+
+    .index {
+      position: absolute;
+      left: -50px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 1;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      color: var(--muted);
+      font: 850 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #111821;
+    }
+
+    .flow-step.done .index {
+      border-color: var(--green);
+      color: #06130c;
+      background: var(--green);
+    }
+
+    .flow-step.current .index {
+      border-color: var(--amber);
+      color: #160f02;
+      background: var(--amber);
+    }
+
+    .flow-copy strong {
+      display: block;
+      font-size: 17px;
+      line-height: 1.1;
+    }
+
+    .flow-copy span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .state-tag {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+
+    .flow-step.has-exits { align-items: start; }
+
+    .side-exits {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 194, 71, .18);
+    }
+
+    .exit-label {
+      grid-column: 1 / -1;
+      color: #d8c17b;
+      font-size: 11px;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    .branch {
+      border: 1px dashed rgba(148, 166, 196, .34);
+      border-radius: 8px;
+      padding: 10px 11px 10px 34px;
+      background: rgba(255, 255, 255, .025);
+      cursor: pointer;
+      position: relative;
+      min-width: 0;
+    }
+
+    .branch:before {
+      content: "↳";
+      position: absolute;
+      left: 12px;
+      top: 10px;
+      color: currentColor;
+      font-weight: 900;
+    }
+
+    .branch.wait {
+      border-color: rgba(169, 149, 255, .62);
+      color: #ddd6ff;
+    }
+
+    .branch.fail {
+      border-color: rgba(255, 100, 117, .62);
+      color: #ffd1d6;
+    }
+
+    .branch.selected { box-shadow: inset 0 0 0 1px rgba(56, 199, 255, .58); }
+
+    .branch:hover,
+    .branch:focus-visible {
+      border-style: solid;
+      outline: none;
+    }
+
+    .branch strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .branch span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .detail-panel h3 {
+      margin-top: 5px;
+      font-size: 24px;
+      line-height: 1.12;
+    }
+
+    .detail-body {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .detail-list {
+      display: grid;
+      gap: 13px;
+      margin-top: 18px;
+    }
+
+    .detail-item {
+      border-top: 1px solid rgba(148, 166, 196, .18);
+      padding-top: 13px;
+    }
+
+    .detail-item:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .detail-item span {
+      display: block;
+      margin-bottom: 4px;
+      color: #c4d1e3;
+      font-size: 11px;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    .detail-item p {
+      color: var(--muted);
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    .recent {
+      display: grid;
+      gap: 8px;
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .recent-row {
+      display: grid;
+      grid-template-columns: 52px minmax(0, 1fr);
+      gap: 8px;
+    }
+
+    .time {
+      color: #c4d1e3;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+
+    .fineprint {
+      margin-top: 12px;
+      color: var(--faint);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    [data-editable] { cursor: text; }
+    [contenteditable="true"] { caret-color: var(--blue); }
+    [contenteditable="true"]:focus {
+      outline: 1px solid rgba(56, 199, 255, .45);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
+    @media (max-width: 920px) {
+      main { width: min(100% - 22px, 820px); }
+      .topbar,
+      .workspace {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+      .status { min-width: 0; }
+      .detail-panel {
+        min-height: 0;
+        position: static;
+      }
+      .flow { max-width: none; }
+      .side-exits { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body data-dashtml-path="__ABS_HTML_PATH__" data-save-endpoint="http://127.0.0.1:8765/save">
+  <main>
+    <header class="topbar">
+      <div>
+        <h1 data-editable contenteditable="false">__DASHBOARD_TITLE__</h1>
+        <p class="subtitle" data-editable contenteditable="false">__DASHBOARD_SUBTITLE__</p>
+      </div>
+      <aside class="status" aria-label="current state">
+        <small>Current State</small>
+        <strong id="currentState">__CURRENT_STATE_TITLE__</strong>
+        <div class="save-state" aria-live="polite">Save: <b id="saveStatus">双击文字可编辑</b></div>
+      </aside>
+    </header>
+
+    <section class="workspace" aria-label="state machine dashboard">
+      <section class="flow-panel" aria-label="state flow">
+        <h2>Task Flow</h2>
+        <div class="flow" id="flow" style="--done-stop: __DONE_STOP__; --current-stop: __CURRENT_STOP__;">
+__FLOW_STEPS__
+        </div>
+      </section>
+
+      <aside class="detail-panel" aria-label="state detail">
+        <span class="eyebrow" id="detailKicker" data-editable data-detail-field="kicker" contenteditable="false">__DETAIL_KICKER__</span>
+        <h3 id="detailTitle" data-editable data-detail-field="title" contenteditable="false">__DETAIL_TITLE__</h3>
+        <p class="detail-body" id="detailBody" data-editable data-detail-field="body" contenteditable="false">__DETAIL_BODY__</p>
+
+        <div class="detail-list">
+          <div class="detail-item">
+            <span>为什么</span>
+            <p id="detailWhy" data-editable data-detail-field="why" contenteditable="false">__DETAIL_WHY__</p>
+          </div>
+          <div class="detail-item">
+            <span>证据</span>
+            <p id="detailEvidence" data-editable data-detail-field="evidence" contenteditable="false">__DETAIL_EVIDENCE__</p>
+          </div>
+          <div class="detail-item">
+            <span>退出条件</span>
+            <p id="detailExit" data-editable data-detail-field="exit" contenteditable="false">__DETAIL_EXIT__</p>
+          </div>
+        </div>
+
+        <div class="recent" aria-label="recent events">
+          <h2>Recent</h2>
+__RECENT_EVENTS__
+        </div>
+      </aside>
+    </section>
+
+    <p class="fineprint" data-editable contenteditable="false">点击状态查看右侧细节；双击文字编辑，失焦后自动保存到本地 HTML。</p>
+  </main>
+
+  <script id="state-data" type="application/json">
+__STATE_DATA_JSON__
+  </script>
+
+  <script>
+    const current = "__CURRENT_STATE_ID__";
+    let selected = current;
+    let states = JSON.parse(document.getElementById("state-data").textContent);
+    const targetPath = document.body.dataset.dashtmlPath;
+    const saveEndpoint = document.body.dataset.saveEndpoint;
+    const draftKey = `state-machine-html:draft:v1:${targetPath}`;
+
+    function setSaveStatus(message) {
+      const node = document.getElementById("saveStatus");
+      if (node) node.textContent = message;
+    }
+
+    function writeStateData() {
+      document.getElementById("state-data").textContent = `\n${JSON.stringify(states, null, 2)}\n  `;
+    }
+
+    function syncActiveDetailField(node) {
+      const field = node.dataset.detailField;
+      if (!field || !states[selected]) return;
+      states[selected][field] = node.innerText.trim();
+      writeStateData();
+    }
+
+    function syncActiveDetailFields() {
+      document.querySelectorAll("[data-detail-field]").forEach(syncActiveDetailField);
+    }
+
+    function serializeDocument() {
+      syncActiveDetailFields();
+      const clone = document.documentElement.cloneNode(true);
+      clone.querySelectorAll("[contenteditable]").forEach(node => {
+        node.setAttribute("contenteditable", "false");
+      });
+      clone.querySelectorAll(".selected").forEach(node => {
+        node.classList.remove("selected");
+      });
+      const currentNode = clone.querySelector(`[data-state="${current}"]`);
+      if (currentNode) currentNode.classList.add("selected");
+      const status = clone.querySelector("#saveStatus");
+      if (status) status.textContent = "双击文字可编辑";
+      return `<!doctype html>\n${clone.outerHTML}`;
+    }
+
+    function saveDraft() {
+      localStorage.setItem(draftKey, serializeDocument());
+      setSaveStatus("草稿已保存");
+    }
+
+    async function saveFile() {
+      const html = serializeDocument();
+      localStorage.setItem(draftKey, html);
+      setSaveStatus("正在保存...");
+      try {
+        const response = await fetch(saveEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path: targetPath, html })
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.error || "save failed");
+        localStorage.removeItem(draftKey);
+        setSaveStatus(`文件已保存 ${new Date().toTimeString().slice(0, 5)}`);
+      } catch (error) {
+        setSaveStatus("保存服务不可用，草稿留在浏览器");
+      }
+    }
+
+    function activateEditable(node) {
+      node.setAttribute("contenteditable", "true");
+      node.focus();
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      range.collapse(false);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    function render() {
+      document.querySelectorAll("[data-state]").forEach(node => {
+        const state = node.dataset.state;
+        node.classList.toggle("selected", state === selected);
+      });
+
+      const detail = states[selected];
+      document.getElementById("currentState").textContent = states[current].title;
+      document.getElementById("detailKicker").textContent = detail.kicker;
+      document.getElementById("detailTitle").textContent = detail.title;
+      document.getElementById("detailBody").textContent = detail.body;
+      document.getElementById("detailWhy").textContent = detail.why;
+      document.getElementById("detailEvidence").textContent = detail.evidence;
+      document.getElementById("detailExit").textContent = detail.exit;
+    }
+
+    document.querySelectorAll("[data-state]").forEach(node => {
+      node.addEventListener("click", event => {
+        if (event.target.closest("[contenteditable='true']")) return;
+        event.stopPropagation();
+        selected = node.dataset.state;
+        render();
+      });
+      node.addEventListener("keydown", event => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        event.stopPropagation();
+        selected = node.dataset.state;
+        render();
+      });
+    });
+
+    document.querySelectorAll("[data-editable]").forEach(node => {
+      node.setAttribute("contenteditable", "false");
+      node.addEventListener("dblclick", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        activateEditable(node);
+      });
+      node.addEventListener("input", () => {
+        syncActiveDetailField(node);
+        saveDraft();
+      });
+      node.addEventListener("blur", () => {
+        node.setAttribute("contenteditable", "false");
+        syncActiveDetailField(node);
+        saveFile();
+      });
+      node.addEventListener("keydown", event => {
+        if (event.key !== "Escape") return;
+        node.setAttribute("contenteditable", "false");
+        node.blur();
+      });
+    });
+
+    window.addEventListener("beforeunload", saveDraft);
+    render();
+  </script>
+</body>
+</html>
